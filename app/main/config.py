@@ -9,18 +9,18 @@ class Config:
     DEBUG = False
 
 
-class DevelopmentConfig:
+class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'auth-backend-main.db')
 
 
-class TestingConfig:
+class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'auth-backend-test.db')
 
 
-class ProductionConfig:
+class ProductionConfig(Config):
     DEBUG = False
 
 

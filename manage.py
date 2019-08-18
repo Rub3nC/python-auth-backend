@@ -11,7 +11,6 @@ app.app_context().push()
 
 manager = Manager(app)
 
-
 @manager.command
 def run():
     app.run()
