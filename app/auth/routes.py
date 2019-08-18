@@ -1,6 +1,6 @@
 from flask_restful import Api
 # Test function
-from .resources.test import Test
+from .controller import Test
 
 class RoutesAuth:
     version_base_dir = "/v1"
@@ -9,7 +9,7 @@ class RoutesAuth:
     @classmethod
     def add_route(cls, blueprint: object) -> None:
         api = Api(blueprint)
-        api.add_resource(Test, "/<string:name>")
+        api.add_resource(Test, "{}/<string:name>".format(cls.auth_base_dir))
         
         '''
         These are the project initial routes
