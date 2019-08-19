@@ -4,7 +4,7 @@ Defines the blueprint for the store resource
 from flask import Blueprint
 from flask_restful import Api
 
-from app.resources import StoreResource, StoreItemsResource
+from resources import StoreResource, StoreItemsResource
 
 
 BLUEPRINT_PREFIX = '/store'

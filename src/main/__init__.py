@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint
 from .config import config_by_name
 
-from app import routes
+import routes
 
 
 def create_app(config_name):
