@@ -6,6 +6,7 @@ from flask_restful import Api
 
 from app.resources import StoreResource, StoreItemsResource
 
+
 BLUEPRINT_PREFIX = '/store'
 STORE_BLUEPRINT = Blueprint('store', __name__)
 
