@@ -2,4 +2,4 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-from .auth import UserModel, ConfirmationModel
+from .auth import UserModel, EmailConfirmationModel

@@ -1,21 +1,31 @@
+from datetime import datetime
+from time import time
+from uuid import uuid4
 from . import db
+from .base import BaseModel
 
+CONFIRMATION_EXPIRATION_DELTA = 1800  # 30 minutes
 
-class UserModel(db.Model):
+class UserModel(db.Model, BaseModel):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(80), nullable=False, unique=True)
-    is_active = db.Column(db.Boolean, nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
 
     confirmation = db.relationship(
-        "ConfirmationModel", lazy="dynamic", cascade="all, delete-orphan"
+        "EmailConfirmationModel", lazy="dynamic", cascade="all, delete-orphan"
     )
 
+    def __init__(self):
+        self.created_at = datetime.now()
+        self.is_active = True
 
-class EmailConfirmationModel(db.Model):
+
+class EmailConfirmationModel(db.Model, BaseModel):
     __tablename__ = "confirmations"
 
     id = db.Column(db.String(50), primary_key=True)
