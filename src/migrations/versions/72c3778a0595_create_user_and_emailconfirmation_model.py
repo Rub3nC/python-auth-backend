@@ -1,8 +1,8 @@
 """Create user and emailconfirmation model
 
-Revision ID: 51f5e3cd8310
+Revision ID: 72c3778a0595
 Revises: 
-Create Date: 2019-08-20 20:38:02.855302
+Create Date: 2019-08-20 21:32:30.544888
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '51f5e3cd8310'
+revision = '72c3778a0595'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=80), nullable=True),
-    sa.Column('password', sa.String(length=80), nullable=False),
+    sa.Column('password_hash', sa.String(length=100), nullable=True),
     sa.Column('email', sa.String(length=80), nullable=True),
     sa.Column('first_name', sa.String(length=80), nullable=True),
     sa.Column('last_name', sa.String(length=80), nullable=True),

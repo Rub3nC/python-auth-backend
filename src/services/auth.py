@@ -1,3 +1,4 @@
+import bcrypt
 from time import time
 from models import UserModel, EmailConfirmationModel
 
@@ -41,7 +42,7 @@ class UserService:
         user = UserModel()
         user.username = username
         user.email = email
-        user.password = password
+        user.password_hash = bcrypt.hashpw(bytes(password, encoding='utf-8'), bcrypt.gensalt())
         user.first_name = first_name
         user.last_name = last_name
 

@@ -4,14 +4,14 @@ from uuid import uuid4
 from . import db
 from .base import BaseModel
 
-CONFIRMATION_EXPIRATION_DELTA = 1800  # 30 minutes
+CONFIRMATION_EXPIRATION_DELTA = 60 * 30  # 60seg * 30min = 1800 
 
 class UserModel(db.Model, BaseModel):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=True, unique=True)
-    password = db.Column(db.String(80), nullable=False)
+    password_hash = db.Column(db.String(100), nullable=True)
     email = db.Column(db.String(80), nullable=True, unique=True)
     first_name = db.Column(db.String(80), nullable=True)
     last_name = db.Column(db.String(80), nullable=True)
@@ -25,6 +25,7 @@ class UserModel(db.Model, BaseModel):
 
     def __init__(self):
         self.created_at = datetime.now()
+        self.update_at = datetime.now()
         self.is_active = True
 
 
