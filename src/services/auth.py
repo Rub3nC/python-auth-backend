@@ -26,20 +26,24 @@ class UserService:
         return UserModel.query.all()
  
     @classmethod
-    def update(cls, user_id: int, is_active: bool) -> "UserModel":
+    def update(cls, user_id: int, first_name:str, last_name:str, is_active: bool) -> "UserModel":
         """ Update a user's is_active """
         user = cls.get_by_id(user_id)
         user.is_active = is_active
+        user.first_name = first_name
+        user.last_name = last_name
 
         return user.save()
 
     @staticmethod
-    def create(username: str, email:str, password:str) -> "UserModel":
+    def create(username: str, email:str, password:str, first_name:str, last_name:str) -> "UserModel":
         """ Create a new user """
         user = UserModel()
         user.username = username
         user.email = email
         user.password = password
+        user.first_name = first_name
+        user.last_name = last_name
 
         return user.save()
 

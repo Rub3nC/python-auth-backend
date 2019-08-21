@@ -10,11 +10,14 @@ class UserModel(db.Model, BaseModel):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), nullable=False, unique=True)
+    username = db.Column(db.String(80), nullable=True, unique=True)
     password = db.Column(db.String(80), nullable=False)
-    email = db.Column(db.String(80), nullable=False, unique=True)
+    email = db.Column(db.String(80), nullable=True, unique=True)
+    first_name = db.Column(db.String(80), nullable=True)
+    last_name = db.Column(db.String(80), nullable=True)
     is_active = db.Column(db.Boolean, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
+    update_at = db.Column(db.DateTime, nullable=True)
 
     confirmation = db.relationship(
         "EmailConfirmationModel", lazy="dynamic", cascade="all, delete-orphan"
@@ -33,6 +36,7 @@ class EmailConfirmationModel(db.Model, BaseModel):
     confirmed = db.Column(db.Boolean, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     user = db.relationship("UserModel")
+    created_at = db.Column(db.DateTime, nullable=False)
 
     def __init__(self, user_id: int, **kwargs):
         super().__init__(**kwargs)
@@ -40,3 +44,4 @@ class EmailConfirmationModel(db.Model, BaseModel):
         self.id = uuid4().hex
         self.expire_at = int(time()) + CONFIRMATION_EXPIRATION_DELTA
         self.confirmed = False
+        self.created_at = datetime.now()
