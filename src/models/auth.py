@@ -1,12 +1,18 @@
+import os
 from datetime import datetime
 from time import time
 from uuid import uuid4
 from . import db
 from .base import BaseModel
+
 from main.bcrypt import app_bcrypt
+from main.config import config_by_name
 
 
-CONFIRMATION_EXPIRATION_DELTA = 60 * 30  # 60seg * 30min = 1800 
+config = config_by_name[os.getenv('APP_ENV') or 'dev']
+
+                            # 60seg*36min*24h = 1d 
+CONFIRMATION_EXPIRATION_DELTA = 60*60*24*int(config.ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS)
 
 class UserModel(db.Model, BaseModel):
     __tablename__ = "users"
