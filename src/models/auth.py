@@ -4,7 +4,10 @@ from time import time
 from uuid import uuid4
 from . import db
 from .base import BaseModel
+
+from main.bcrypt import app_bcrypt
 from main.config import config_by_name
+
 
 config = config_by_name[os.getenv('APP_ENV') or 'dev']
 
@@ -32,6 +35,20 @@ class UserModel(db.Model, BaseModel):
         self.created_at = datetime.now()
         self.update_at = datetime.now()
         self.is_active = True
+
+    @property
+    def password(self):
+        raise AttributeError('password: write-only field')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = app_bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return app_bcrypt.check_password_hash(self.password_hash, password)
+
+    def __repr__(self):
+        return "<User '{}'>".format(self.username if self.username else self.email)
 
 
 class EmailConfirmationModel(db.Model, BaseModel):

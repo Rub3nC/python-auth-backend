@@ -42,7 +42,7 @@ class UserService:
         user = UserModel()
         user.username = username
         user.email = email
-        user.password_hash = bcrypt.hashpw(bytes(password, encoding='utf-8'), bcrypt.gensalt())
+        user.password = password
         user.first_name = first_name
         user.last_name = last_name
 
@@ -63,22 +63,22 @@ class EmailConfirmationService:
 
     @classmethod
     def expired(cls, confimation_id: str) -> bool:
-        ''' Check if expired '''
+        """ Check if expired """
         confirmation = cls.get_by_id(confimation_id)
         if confirmation:
             return time() > confirmation.expire_at
     
     @classmethod
     def force_to_expire(cls, confimation_id: str) -> "EmailConfirmationModel":  
-        ''' Forcing current confirmation to expire '''
+        """ Forcing current confirmation to expire """
         if not cls.expired(confimation_id):
             confirmation = cls.get_by_id(confimation_id)
             confirmation.expire_at = int(time())
             return confirmation.save()
     
     @classmethod
-    def confirme(cls, confimation_id: str) -> "EmailConfirmationModel":
-        ''' Confirm the email '''
+    def confirm_email(cls, confimation_id: str) -> "EmailConfirmationModel":
+        """ Confirm the email """
         confirmation = cls.get_by_id(confimation_id)
         confirmation.confirmed = True
         return confirmation.save()
