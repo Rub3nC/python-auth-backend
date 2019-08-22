@@ -38,17 +38,9 @@ class UserResource(Resource):
                 user["first_name"],
                 user["last_name"],
             )
-
-            #confirmation = ConfirmationModel(user.id)
-            #confirmation.save_to_db()
-            #user.send_confirmation_email()
             return {"message": SUCCESS_REGISTER_MESSAGE}, 201
-        #except MailGunException as e:
-        #    user.delete_from_db()  # rollback
-        #    return {"message": str(e)}, 500
         except:  # failed to save user to db
             traceback.print_exc()
-            user.delete()
             return {"message": FAILED_TO_CREATE}, 500
 
     # get -> Return user profile. Access_token require
