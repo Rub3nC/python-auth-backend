@@ -12,8 +12,8 @@ password_validators = config.AUTH_PASSWORD_VALIDATORS_PARAMETERS
 
 
 class UserRegistrationSchema(ma.Schema):
-    username = fields.String(required=True)
-    email = fields.String(required=True)
+    username = fields.String(required=True, validate=validate.Length(min=1, max=50))
+    email = fields.Email(required=True)
     password = fields.String(required=True)
     first_name = fields.String()
     last_name = fields.String()
@@ -42,18 +42,6 @@ class UserRegistrationSchema(ma.Schema):
 
         if errors:
             raise ValidationError(errors)
-
-    @validates("username")
-    def validate_username(self, value):
-        if len(value) == 0:
-            raise ValidationError("Can not be blank")
-
-    @validates("email")
-    def validate_email(self, value):
-        if len(value) == 0:
-            raise ValidationError("Can not be blank")
-        if not re.match('^[(a-z0-9\_\-\.)]+@[(a-z0-9\_\-\.)]+\.[(a-z)]{2,15}$',value.lower()):
-            raise ValidationError("It is not a valid email")
 
 
 class UserSchema(ma.ModelSchema):
