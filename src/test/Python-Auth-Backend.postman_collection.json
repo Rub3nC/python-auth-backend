@@ -140,7 +140,17 @@
 					"name": "/v1/auth/user",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"user_example\",\n\t\"email\": \"user@example.com\",\n\t\"password\": \"D13g0.L30nard0\",\n\t\"first_name\": \"Wilfred\",\n\t\"last_name\": \"Vasquez\"\n}"
+						},
 						"url": {
 							"raw": "http://127.0.0.1:5000/v1/auth/user",
 							"protocol": "http",

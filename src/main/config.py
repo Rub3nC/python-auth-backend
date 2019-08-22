@@ -8,7 +8,15 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'mysecret')
     DEBUG = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
+    AUTH_PASSWORD_VALIDATORS_PARAMETERS = {
+        "length": 8,        # Min length: 8            
+        "uppercase": 0,     # Need min. 0 uppercase letters 
+        "numbers": 1,       # Need min. 1 digits
+        "special": 1,       # Need min. 1 special characters
+        "nonletters": 2,    # Need min. 2 non-letter characters (digits, specials, anything)
+        "strength": 0.5     # password strength. Value range [0 : 1]
+    }
+
     ACCOUNT_EMAIL_REQUIRED=True
     # -------------------------------------------------------------------------------------------------
     # The options are username, email or username_email. For email and username_email

@@ -45,8 +45,9 @@ class UserService:
         user.password = password
         user.first_name = first_name
         user.last_name = last_name
+        user.save()
 
-        return user.save()
+        return user
 
 
 class EmailConfirmationService:

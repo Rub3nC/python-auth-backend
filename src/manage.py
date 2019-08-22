@@ -2,6 +2,7 @@ import os
 import unittest
 from flask_migrate import MigrateCommand
 from flask_script import Manager
+from flask_marshmallow import Marshmallow
 
 from main import create_app
 

@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 
 import routes
 from models import db
+from schemas import ma
 from .config import config_by_name
 from .bcrypt import app_bcrypt
 
@@ -17,6 +18,7 @@ def create_app(config_name):
 
     db.init_app(app)
     app_bcrypt.init_app(app)
+    ma.init_app(app)
     migrate = Migrate(app, db)
 
     return app
