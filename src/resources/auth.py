@@ -1,14 +1,47 @@
+import traceback
+from marshmallow import ValidationError
 from flask_restful import Resource
+from flask import request
+from schemas import UserSchema, UserRegistrationSchema
+from services import UserService
+
+
+USER_ALREADY_EXISTS = "A user with that username already exists."
+EMAIL_ALREADY_EXISTS = "A user with that email already exists."
+FAILED_TO_CREATE = "Internal server error. Failed to create user."
 
 
 class UserResource(Resource):
     # post -> To create a user
     def post(self):
-        # Receive and check data {username, email, password }
-        # If data not valid prepare error message and send
-        # If data valid Create and send email confirm
-        # Response 
-        return {"message": "Create user"}, 200
+        user_schema_register = UserRegistrationSchema()
+        user_json = request.get_json()
+        try:
+            user = user_schema_register.load(user_json)
+        except ValidationError as e:
+            return e.messages
+
+        if UserService.get_by_username(user["username"]):
+            return {"message": USER_ALREADY_EXISTS}, 400
+
+        if UserService.get_by_email(user["email"]):
+            return {"message": EMAIL_ALREADY_EXISTS}, 400
+
+        try:
+            user = UserService.create(
+                user["username"],
+                user["email"],
+                user["password"],
+                user["first_name"],
+                user["last_name"],
+            )
+            user_schema = UserSchema()
+            return user_schema.dump(user), 201
+        except:  # failed to save user to db
+            traceback.print_exc()
+            if user:
+                user.delete()
+            return {"message": FAILED_TO_CREATE}, 500
 
     # get -> Return user profile. Access_token require
     def get(self):
