@@ -13,7 +13,6 @@ class Config:
         "uppercase": 0,     # Need min. 0 uppercase letters 
         "numbers": 1,       # Need min. 1 digits
         "special": 1,       # Need min. 1 special characters
-        "nonletters": 2,    # Need min. 2 non-letter characters (digits, specials, anything)
         "strength": 0.5     # password strength. Value range [0 : 1]
     }
 

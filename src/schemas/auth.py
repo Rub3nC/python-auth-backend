@@ -23,20 +23,25 @@ class UserSchema(ma.Schema):
         
     @validates("password")
     def validate_password(self, value):
+        errors = []
         if PasswordStats(value).strength() < password_validators["strength"]:
-            raise ValidationError("The password is very weak")
+            errors.append({'strength': 'The password is very simple.'})
 
-        policy = PasswordPolicy.from_names(
-            length=password_validators["length"],  
-            uppercase=password_validators["uppercase"],
-            numbers=password_validators["numbers"],
-            special=password_validators["special"],
-            nonletters=password_validators["nonletters"],
-        )
-        if policy.test(value):
-            text_e = ''
-            for p in policy.test(value):
-                text_e += '{}, '.format(p)
-            raise ValidationError("Password does not comply with {}".format(
-            	text_e[0:len(text_e) - 2])
-            )
+        if PasswordStats(value).length < password_validators["length"]:
+            errors.append({'length': 'The password must be at least {} characters.'.
+                format(password_validators["length"])})
+
+        if PasswordStats(value).numbers < password_validators["numbers"]:
+            errors.append({'numbers': 'The password must have at least {} numbers.'.
+                format(password_validators["numbers"])})
+
+        if PasswordStats(value).letters_uppercase < password_validators["uppercase"]:
+            errors.append({'uppercase': 'The password must have at least {} uppercase letters.'.
+                format(password_validators["uppercase"])})
+
+        if PasswordStats(value).special_characters < password_validators["special"]:
+            errors.append({'special': 'The password must have be at least {} special characters.'.
+                format(password_validators["special"])})
+
+        if errors:
+            raise ValidationError(errors)
