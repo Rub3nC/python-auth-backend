@@ -8,7 +8,6 @@ from services import UserService
 
 USER_ALREADY_EXISTS = "A user with that username already exists."
 EMAIL_ALREADY_EXISTS = "A user with that email already exists."
-SUCCESS_REGISTER_MESSAGE = "Account created successfully, an email with an activation link has been sent to your email address, please check."
 FAILED_TO_CREATE = "Internal server error. Failed to create user."
 
 
