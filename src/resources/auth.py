@@ -2,7 +2,7 @@ import traceback
 from marshmallow import ValidationError
 from flask_restful import Resource
 from flask import request
-from schemas import UserSchema
+from schemas import UserSchema, UserRegistrationSchema
 from services import UserService
 
 
@@ -15,7 +15,7 @@ FAILED_TO_CREATE = "Internal server error. Failed to create user."
 class UserResource(Resource):
     # post -> To create a user
     def post(self):
-        user_schema_register = UserSchema(only=(
+        user_schema_register = UserRegistrationSchema(only=(
             'username', 'email', 'password','first_name','last_name')
         )
         user_json = request.get_json()
@@ -38,9 +38,12 @@ class UserResource(Resource):
                 user["first_name"],
                 user["last_name"],
             )
-            return {"message": SUCCESS_REGISTER_MESSAGE}, 201
+            user_schema = UserSchema()
+            return user_schema.dump(user), 201
         except:  # failed to save user to db
             traceback.print_exc()
+            if user:
+                user.delete()
             return {"message": FAILED_TO_CREATE}, 500
 
     # get -> Return user profile. Access_token require

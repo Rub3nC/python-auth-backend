@@ -10,7 +10,7 @@ config = config_by_name[os.getenv('APP_ENV') or 'dev']
 password_validators = config.AUTH_PASSWORD_VALIDATORS_PARAMETERS
 
 
-class UserSchema(ma.Schema):
+class UserRegistrationSchema(ma.Schema):
     class Meta:
         fields = (
         	'username',
@@ -45,3 +45,9 @@ class UserSchema(ma.Schema):
 
         if errors:
             raise ValidationError(errors)
+
+
+class UserSchema(ma.ModelSchema):
+    class Meta:
+        model = UserModel
+        load_only = ("confirmation", "password_hash", "created_at", "update_at")

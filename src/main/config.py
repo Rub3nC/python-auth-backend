@@ -13,7 +13,7 @@ class Config:
         "uppercase": 0,     # Need min. 0 uppercase letters 
         "numbers": 1,       # Need min. 1 digits
         "special": 1,       # Need min. 1 special characters
-        "strength": 0.5     # password strength. Value range [0 : 1]
+        "strength": 0       # password strength. Value range [0 : 1]
     }
 
     ACCOUNT_EMAIL_REQUIRED=True
