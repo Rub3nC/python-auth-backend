@@ -15,9 +15,7 @@ FAILED_TO_CREATE = "Internal server error. Failed to create user."
 class UserResource(Resource):
     # post -> To create a user
     def post(self):
-        user_schema_register = UserRegistrationSchema(only=(
-            'username', 'email', 'password','first_name','last_name')
-        )
+        user_schema_register = UserRegistrationSchema()
         user_json = request.get_json()
         try:
             user = user_schema_register.load(user_json)
