@@ -1,6 +1,10 @@
+from requests import Response
+from flask import request, url_for
+
 import bcrypt
 from time import time
 from models import UserModel, EmailConfirmationModel
+from libs import Mailgun
 
 
 class UserService:
@@ -33,8 +37,9 @@ class UserService:
         user.is_active = is_active
         user.first_name = first_name
         user.last_name = last_name
+        user.save()
 
-        return user.save()
+        return user
 
     @staticmethod
     def create(username: str, email:str, password:str, first_name:str, last_name:str) -> "UserModel":
@@ -48,6 +53,18 @@ class UserService:
         user.save()
 
         return user
+
+    @classmethod
+    def send_confirmation_email(cls, user_id) -> Response:
+        user = cls.get_by_id(user_id)
+        subject = "Registration Confirmation"
+        link = request.url_root[:-1] + url_for(
+            "auth.confirmemailresource", confirmation_id=user.most_recent_confirmation.id
+        )
+        #link=""
+        text = f"Please click the link to confirm your registration: {link}"
+        html = f"<html>Please click the link to confirm your registration: <a href={link}>link</a></html>"
+        return Mailgun.send_email([user.email], subject, text, html)
 
 
 class EmailConfirmationService:
@@ -75,18 +92,20 @@ class EmailConfirmationService:
         if not cls.expired(confimation_id):
             confirmation = cls.get_by_id(confimation_id)
             confirmation.expire_at = int(time())
-            return confirmation.save()
+            confirmation.save()
+            return confirmation
     
     @classmethod
     def confirm_email(cls, confimation_id: str) -> "EmailConfirmationModel":
         """ Confirm the email """
         confirmation = cls.get_by_id(confimation_id)
         confirmation.confirmed = True
-        return confirmation.save()
+        confirmation.save()
+        return confirmation
 
     @staticmethod
     def create(user_id: int) -> "EmailConfirmationModel":
         """ Create a new user """
         confirmation = EmailConfirmationModel(user_id=user_id)
-
-        return confirmation.save()
+        confirmation.save()
+        return confirmation

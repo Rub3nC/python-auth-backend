@@ -3,12 +3,18 @@ from marshmallow import ValidationError
 from flask_restful import Resource
 from flask import request
 from schemas import UserSchema, UserRegistrationSchema
-from services import UserService
+from services import UserService, EmailConfirmationService
+
+from libs import MailGunException
 
 
 USER_ALREADY_EXISTS = "A user with that username already exists."
 EMAIL_ALREADY_EXISTS = "A user with that email already exists."
 FAILED_TO_CREATE = "Internal server error. Failed to create user."
+CONFIRMATION_NOT_FOUND = "Confirmation reference not found."
+CONFIRMATION_LINK_EXPIRED = "The link has expired."
+CONFIRMATION_ALREADY_CONFIRMED = "Registration has already been confirmed."
+CONFIRMATION_SUCCESS = "Email Confirmation Success"
 
 
 class UserResource(Resource):
@@ -35,8 +41,13 @@ class UserResource(Resource):
                 user["first_name"],
                 user["last_name"],
             )
+            confirmation = EmailConfirmationService.create(user.id)
+            UserService.send_confirmation_email(user.id)
             user_schema = UserSchema()
             return user_schema.dump(user), 201
+        except MailGunException as e:
+            user.delete()  # rollback
+            return {"message": str(e)}, 500
         except:  # failed to save user to db
             traceback.print_exc()
             if user:
@@ -77,16 +88,26 @@ class UserLogoutResource(Resource):
         return {"message": "Logout in user"}, 200
 
 class ConfirmEmailResource(Resource):
-    # get -> To receive a request from the confirm email. 
-    # Register user require
+    # get -> To receive email confirmations
     def get(self):
-        # Check request token from confirm email
-        # If not valid prepare error message
-        # If valid update True confirm-email flag
-        return {"message": "Confirm Email Update"}, 200
+        confirmation_id = request.args.get("confirmation_id", "")
+        confirmation = EmailConfirmationService.get_by_id(confirmation_id)
+        if not confirmation:
+            return {"message": CONFIRMATION_NOT_FOUND}, 404
+
+        if EmailConfirmationService.expired(confirmation_id):
+            return {"message": CONFIRMATION_LINK_EXPIRED}, 400
+
+        if confirmation.confirmed:
+            return {"message": CONFIRMATION_ALREADY_CONFIRMED}, 400
+
+        confirmation.confirmed = True
+        confirmation.save()
+
+        return {"message": CONFIRMATION_SUCCESS}, 200
 
     # post -> To send a resend email. Register user require
-    def post(self):
+    def post(self, confirmation_id: str):
         # Receive and check user data
         # If not valid or user no found prepare error message
         # Send confirm email
