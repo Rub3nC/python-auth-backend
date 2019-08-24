@@ -4,7 +4,8 @@ from flask import request, url_for
 import bcrypt
 from time import time
 from models import UserModel, EmailConfirmationModel
-from libs import Mailgun
+#from libs import Mailgun
+from libs import SendMail
 
 
 class UserService:
@@ -64,7 +65,7 @@ class UserService:
         #link=""
         text = f"Please click the link to confirm your registration: {link}"
         html = f"<html>Please click the link to confirm your registration: <a href={link}>link</a></html>"
-        return Mailgun.send_email([user.email], subject, text, html)
+        return SendMail.send_email([user.email], subject, text, html)
 
 
 class EmailConfirmationService:

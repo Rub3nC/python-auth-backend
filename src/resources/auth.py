@@ -5,7 +5,7 @@ from flask import request
 from schemas import UserSchema, UserRegistrationSchema
 from services import UserService, EmailConfirmationService
 
-from libs import MailGunException
+from libs import SendMailException
 
 
 USER_ALREADY_EXISTS = "A user with that username already exists."
@@ -45,7 +45,7 @@ class UserResource(Resource):
             UserService.send_confirmation_email(user.id)
             user_schema = UserSchema()
             return user_schema.dump(user), 201
-        except MailGunException as e:
+        except SendMailException as e:
             user.delete()  # rollback
             return {"message": str(e)}, 500
         except:  # failed to save user to db

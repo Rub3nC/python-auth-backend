@@ -35,8 +35,14 @@ class Config:
     # -------------------------------------------------------------------------------------------------
     ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 
+    # The options are mailgun or sendgrid.
+    # If you select mailgun you must provide the information of MAILGUN_API_KEY and MAILGUN_DOMAIN
+    # If you select sendgrid you must provide the information of SENDGRID_API_KEY 
+    EMAIL_BACKEND = "sendgrid"
+
     MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY", None)
     MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", None)
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", None)
 
 class DevelopmentConfig(Config):
     DEBUG = True
