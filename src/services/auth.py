@@ -71,9 +71,9 @@ class UserService:
 class EmailConfirmationService:
 
     @staticmethod
-    def get_by_id(confimation_id: str) -> "EmailConfirmationModel":
+    def get_by_id(confirmation_id: str) -> "EmailConfirmationModel":
         """ Query a email confirmation by id """
-        return EmailConfirmationModel.query.filter_by(id=confimation_id).first()
+        return EmailConfirmationModel.query.filter_by(id=confirmation_id).first()
 
     @staticmethod
     def get_all() -> "EmailConfirmationModel":
@@ -81,25 +81,25 @@ class EmailConfirmationService:
         return EmailConfirmationModel.query.all()
 
     @classmethod
-    def expired(cls, confimation_id: str) -> bool:
+    def expired(cls, confirmation_id: str) -> bool:
         """ Check if expired """
-        confirmation = cls.get_by_id(confimation_id)
+        confirmation = cls.get_by_id(confirmation_id)
         if confirmation:
             return time() > confirmation.expire_at
     
     @classmethod
-    def force_to_expire(cls, confimation_id: str) -> "EmailConfirmationModel":  
+    def force_to_expire(cls, confirmation_id: str) -> "EmailConfirmationModel":  
         """ Forcing current confirmation to expire """
-        if not cls.expired(confimation_id):
-            confirmation = cls.get_by_id(confimation_id)
+        if not cls.expired(confirmation_id):
+            confirmation = cls.get_by_id(confirmation_id)
             confirmation.expire_at = int(time())
             confirmation.save()
             return confirmation
     
     @classmethod
-    def confirm_email(cls, confimation_id: str) -> "EmailConfirmationModel":
+    def confirm_email(cls, confirmation_id: str) -> "EmailConfirmationModel":
         """ Confirm the email """
-        confirmation = cls.get_by_id(confimation_id)
+        confirmation = cls.get_by_id(confirmation_id)
         confirmation.confirmed = True
         confirmation.save()
         return confirmation
