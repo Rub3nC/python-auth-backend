@@ -74,3 +74,18 @@ class EmailConfirmationModel(db.Model, BaseModel):
         self.expire_at = int(time()) + CONFIRMATION_EXPIRATION_DELTA
         self.confirmed = False
         self.created_at = datetime.now()
+
+
+class BlacklistTokenModel(db.Model, BaseModel):
+    __tablename__ = "blacklist_token"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(256))
+    created_at = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, token: str, **kwargs):
+        self.token = token
+        self.created_at = datetime.now()
+
+    def __repr__(self) -> str:
+        return f"BlacklistToken(id={self.id},token={self.token})"

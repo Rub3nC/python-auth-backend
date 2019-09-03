@@ -2,9 +2,9 @@ import os
 import traceback
 from marshmallow import ValidationError
 from flask_restful import Resource
-from flask import request
+from flask import request, jsonify
 from schemas import UserSchema, UserRegistrationSchema
-from services import UserService, EmailConfirmationService
+from services import UserService, EmailConfirmationService, AuthTokenService, auth_required
 
 from libs import SendMailException
 
@@ -79,17 +79,24 @@ class UserResource(Resource):
 class UserLoginResource(Resource):
     # post -> To log in a user
     def post(self):
+        user_json = request.get_json()
+        user = UserService.get_by_username(user_json["username"])
+        token = AuthTokenService.encode_auth_token(user.id)
         # Receive and check data
         # If data no valid prepare error message an send
         # If data is valid but not user register send message User not found
         # If data is valid and user register,verify is confirm email is confirmed
         # If all ok create access_token and refresh token
         # Response
-        return {"message": "Logged in user"}, 200
+        return {"token": token}, 200
 
 class UserLogoutResource(Resource):
     # post -> To log out a user. Access_token require
+    @auth_required
     def post(self):
+        token = AuthTokenService.get_token_from_header()
+        AuthTokenService.blacklist_token(token)
+        return jsonify({"success": True})
         # Check access_token and the identity user
         # If no valid user prepare error message
         # If valid log out user

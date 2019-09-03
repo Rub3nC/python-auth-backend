@@ -17,7 +17,9 @@ class Config:
         "special": 1,       # Need min. 1 special characters
         "strength": 0       # password strength. Value range [0 : 1]
     }
+    AUTH_TOKEN_EXPIRATION_SECONDS = 3600
 
+    
     ACCOUNT_EMAIL_REQUIRED=True
     # -------------------------------------------------------------------------------------------------
     # The options are username, email or username_email. For email and username_email
@@ -40,7 +42,6 @@ class Config:
     # If you select sendgrid you must provide the information of SENDGRID_API_KEY
     # Else print the email in the console
     EMAIL_BACKEND = "console"
-
     MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY", None)
     MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", None)
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", None)

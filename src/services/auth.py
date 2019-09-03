@@ -1,11 +1,23 @@
 from requests import Response
 from flask import request, url_for
+from functools import wraps
 
+import os
 import bcrypt
+import jwt
 from time import time
-from models import UserModel, EmailConfirmationModel
+from datetime import datetime, timedelta
+from models import UserModel, EmailConfirmationModel, BlacklistTokenModel
 #from libs import Mailgun
 from libs import SendMail
+from .exceptions import InvalidTokenError, TokenExpiredError
+
+from main.config import config_by_name
+config = config_by_name[os.getenv('APP_ENV') or 'dev']
+
+
+INVALID_TOKEN = "Token is invalid or missing."
+TOKEN_EXPIRED = "Authentication token has expired."
 
 
 class UserService:
@@ -110,3 +122,68 @@ class EmailConfirmationService:
         confirmation = EmailConfirmationModel(user_id=user_id)
         confirmation.save()
         return confirmation
+
+
+class AuthTokenService:
+
+    @classmethod
+    def encode_auth_token(cls, user_id:str):
+        """Create a token with user_id and expiration date using secret key"""
+        exp_seconds = config.AUTH_TOKEN_EXPIRATION_SECONDS
+        exp_date = datetime.now() + timedelta(seconds=exp_seconds)
+        payload = {"exp": exp_date, "iat": datetime.now(), "sub": user_id}
+        return jwt.encode(payload, config.SECRET_KEY, algorithm="HS256").decode("utf-8")
+
+    @classmethod
+    def decode_auth_token(cls, token:str):
+        """Convert token to original payload using secret key if the token is valid"""
+        try:
+            payload = jwt.decode(token, config.SECRET_KEY, algorithm="HS256", options={'verify_exp': False})
+            return payload
+        except jwt.InvalidTokenError as ex:
+            raise InvalidTokenError() from ex
+
+    @classmethod
+    def get_token_from_header(cls) -> str:
+        token = None
+        if "Authorization" in request.headers:
+            auth_header = request.headers["Authorization"]
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                token = None
+        return token
+
+    @classmethod
+    def blacklist_token(cls, token:str) -> "BlacklistTokenModel":
+        bl_token = BlacklistTokenModel(token)
+        bl_token.save()
+        return bl_token
+
+    @classmethod
+    def is_token_blacklisted(cls, token:str) -> bool:
+        bl_token = BlacklistTokenModel.query.filter_by(token=token).first()
+        return True if bl_token else False
+
+
+def auth_required(f):
+    """Decorator to require auth token on marked endpoint"""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = AuthTokenService.get_token_from_header()
+        if not token:
+            raise InvalidTokenError()
+
+        if AuthTokenService.is_token_blacklisted(token):
+            raise TokenExpiredError()
+
+        token_payload = AuthTokenService.decode_auth_token(token)
+
+        current_user = UserService.get_by_id(token_payload["sub"])
+        if not current_user:
+            raise InvalidTokenError()
+
+        return f(*args, **kwargs)
+
+    return decorated_function

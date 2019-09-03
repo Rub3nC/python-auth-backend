@@ -13,3 +13,4 @@ marshmallow-sqlalchemy==0.17.0
 password-strength==0.0.3.post2
 python-dotenv==0.10.3
 requests==2.22.0
+PyJWT==1.7.1
