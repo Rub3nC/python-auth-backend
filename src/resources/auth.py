@@ -1,3 +1,4 @@
+import os
 import traceback
 from marshmallow import ValidationError
 from flask_restful import Resource
@@ -7,6 +8,10 @@ from services import UserService, EmailConfirmationService
 
 from libs import SendMailException
 
+from main.config import config_by_name
+config = config_by_name[os.getenv('APP_ENV') or 'dev']
+
+account_email_verification = config.ACCOUNT_EMAIL_VERIFICATION
 
 USER_NOT_FOUND = "User not found."
 USER_ALREADY_EXISTS = "A user with that username already exists."
@@ -44,8 +49,9 @@ class UserResource(Resource):
                 user["first_name"],
                 user["last_name"],
             )
-            confirmation = EmailConfirmationService.create(user.id)
-            UserService.send_confirmation_email(user.id)
+            if not account_email_verification == "none":
+                confirmation = EmailConfirmationService.create(user.id)
+                UserService.send_confirmation_email(user.id)
             user_schema = UserSchema()
             return user_schema.dump(user), 201
         except SendMailException as e:
