@@ -3,7 +3,7 @@ import traceback
 from marshmallow import ValidationError
 from flask_restful import Resource
 from flask import request, jsonify
-from schemas import UserSchema, UserRegistrationSchema
+from schemas import UserSchema, UserRegistrationSchema, UserLoginSchema
 from services import UserService, EmailConfirmationService, AuthTokenService, auth_required
 
 from libs import SendMailException
@@ -17,12 +17,16 @@ USER_NOT_FOUND = "User not found."
 USER_ALREADY_EXISTS = "A user with that username already exists."
 EMAIL_ALREADY_EXISTS = "A user with that email already exists."
 FAILED_TO_CREATE = "Internal server error. Failed to create user."
+INVALID_CREDENTIALS = "Invalid username or password."
 CONFIRMATION_NOT_FOUND = "Confirmation reference not found."
 CONFIRMATION_LINK_EXPIRED = "The link has expired."
 CONFIRMATION_ALREADY_CONFIRMED = "Registration has already been confirmed."
 CONFIRMATION_SUCCESS = "Email Confirmation Success."
 CONFIRMATION_RESEND_FAIL = "Internal server error. Failed to resend confirmation email."
 CONFIRMATION_RESEND_SUCCESSFUL = "E-mail confirmation successfully re-sent."
+CONFIRMATION_NOT_CONFIRMED_ERROR = (
+    "You have not confirmed registration, please check your email <{}>."
+)
 
 
 class UserResource(Resource):
@@ -79,15 +83,23 @@ class UserResource(Resource):
 class UserLoginResource(Resource):
     # post -> To log in a user
     def post(self):
-        user_json = request.get_json()
+        user_schema_login = UserLoginSchema(only=("username","password"))
+        try:
+            user_json = user_schema_login.load(request.get_json())
+        except ValidationError as e:
+            return e.messages
+
+        if not UserService.validate_credentials(user_json["username"], user_json["password"]):
+            return {"message": INVALID_CREDENTIALS}, 401
+
         user = UserService.get_by_username(user_json["username"])
+
+        if account_email_verification == "mandatory":
+            if not user.most_recent_confirmation.confirmed:
+                return {"message": CONFIRMATION_NOT_CONFIRMED_ERROR.format(user.email)}, 400
+
         token = AuthTokenService.encode_auth_token(user.id)
-        # Receive and check data
-        # If data no valid prepare error message an send
-        # If data is valid but not user register send message User not found
-        # If data is valid and user register,verify is confirm email is confirmed
-        # If all ok create access_token and refresh token
-        # Response
+
         return {"token": token}, 200
 
 class UserLogoutResource(Resource):
@@ -97,11 +109,6 @@ class UserLogoutResource(Resource):
         token = AuthTokenService.get_token_from_header()
         AuthTokenService.blacklist_token(token)
         return jsonify({"success": True})
-        # Check access_token and the identity user
-        # If no valid user prepare error message
-        # If valid log out user
-        # Response
-        return {"message": "Logout in user"}, 200
 
 class ConfirmEmailResource(Resource):
     # get -> To receive email confirmations

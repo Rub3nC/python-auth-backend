@@ -48,3 +48,8 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = UserModel
         load_only = ("confirmation", "password_hash", "created_at", "update_at")
+
+class UserLoginSchema(ma.Schema):
+    username = fields.String(required=True)
+    email = fields.Email(required=True)
+    password = fields.String(required=True)

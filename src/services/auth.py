@@ -1,6 +1,7 @@
 from requests import Response
 from flask import request, url_for
 from functools import wraps
+from main.bcrypt import app_bcrypt
 
 import os
 import bcrypt
@@ -42,6 +43,17 @@ class UserService:
     def get_all() -> "UserModel":
         """ Query all users """
         return UserModel.query.all()
+
+    @classmethod
+    def validate_credentials(cls, username:str, password:str) -> bool:
+        user = cls.get_by_username(username)
+        if not user:
+            return False
+        
+        if not user.check_password(password):
+            return False
+
+        return True
  
     @classmethod
     def update(cls, user_id: int, first_name:str, last_name:str, is_active: bool) -> "UserModel":
