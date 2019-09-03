@@ -1,6 +1,6 @@
 import os
 import re
-from marshmallow import fields,validate, validates, ValidationError
+from marshmallow import fields,validate, validates, ValidationError, pre_load
 from password_strength import PasswordPolicy, PasswordStats
 from . import ma
 
@@ -9,6 +9,7 @@ from main.config import config_by_name
 config = config_by_name[os.getenv('APP_ENV') or 'dev']
 
 password_validators = config.AUTH_PASSWORD_VALIDATORS_PARAMETERS
+account_authentication_method = config.ACCOUNT_AUTHENTICATION_METHOD
 
 
 class UserRegistrationSchema(ma.Schema):
@@ -49,7 +50,22 @@ class UserSchema(ma.ModelSchema):
         model = UserModel
         load_only = ("confirmation", "password_hash", "created_at", "update_at")
 
+
 class UserLoginSchema(ma.Schema):
-    username = fields.String(required=True)
-    email = fields.Email(required=True)
+    username = fields.String()
+    email = fields.Email()
     password = fields.String(required=True)
+
+    @pre_load
+    def _pre_load(self, data):
+        if account_authentication_method == "username" and not "username" in data:
+            raise ValidationError({"username": ["Missing data for required field."]})
+        
+        if account_authentication_method == "email" and not "email" in data:
+            raise ValidationError({"email": ["Missing data for required field."]})
+
+        if account_authentication_method == "username_email":
+            if not "email" in data and not "username" in data:
+                raise ValidationError({"username or email": ["Missing data for required field."]})
+            
+        return data    

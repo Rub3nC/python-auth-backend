@@ -6,6 +6,7 @@ from main.bcrypt import app_bcrypt
 import os
 import bcrypt
 import jwt
+from typing import Dict
 from time import time
 from datetime import datetime, timedelta
 from models import UserModel, EmailConfirmationModel, BlacklistTokenModel
@@ -15,7 +16,7 @@ from .exceptions import InvalidTokenError, TokenExpiredError
 
 from main.config import config_by_name
 config = config_by_name[os.getenv('APP_ENV') or 'dev']
-
+account_authentication_method = config.ACCOUNT_AUTHENTICATION_METHOD
 
 INVALID_TOKEN = "Token is invalid or missing."
 TOKEN_EXPIRED = "Authentication token has expired."
@@ -45,12 +46,24 @@ class UserService:
         return UserModel.query.all()
 
     @classmethod
-    def validate_credentials(cls, username:str, password:str) -> bool:
-        user = cls.get_by_username(username)
+    def validate_credentials(cls, user_json: Dict) -> bool:
+        user = None
+        if account_authentication_method == "username":
+            user = cls.get_by_username(user_json["username"])
+
+        if account_authentication_method == "email":
+            user = cls.get_by_email(user_json["email"])
+
+        if account_authentication_method == "username_email":
+            if "username" in user_json:
+                user = cls.get_by_username(user_json["username"])
+            if "email" in user_json:
+                user = cls.get_by_email(user_json["email"])
+
         if not user:
             return False
         
-        if not user.check_password(password):
+        if not user.check_password(user_json["password"]):
             return False
 
         return True

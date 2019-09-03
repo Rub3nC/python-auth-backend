@@ -12,12 +12,12 @@ from main.config import config_by_name
 config = config_by_name[os.getenv('APP_ENV') or 'dev']
 
 account_email_verification = config.ACCOUNT_EMAIL_VERIFICATION
+account_authentication_method = config.ACCOUNT_AUTHENTICATION_METHOD
 
 USER_NOT_FOUND = "User not found."
 USER_ALREADY_EXISTS = "A user with that username already exists."
 EMAIL_ALREADY_EXISTS = "A user with that email already exists."
 FAILED_TO_CREATE = "Internal server error. Failed to create user."
-INVALID_CREDENTIALS = "Invalid username or password."
 CONFIRMATION_NOT_FOUND = "Confirmation reference not found."
 CONFIRMATION_LINK_EXPIRED = "The link has expired."
 CONFIRMATION_ALREADY_CONFIRMED = "Registration has already been confirmed."
@@ -27,6 +27,13 @@ CONFIRMATION_RESEND_SUCCESSFUL = "E-mail confirmation successfully re-sent."
 CONFIRMATION_NOT_CONFIRMED_ERROR = (
     "You have not confirmed registration, please check your email <{}>."
 )
+
+if account_authentication_method == "username":
+    INVALID_CREDENTIALS = "Invalid username or password."
+if account_authentication_method == "email":
+    INVALID_CREDENTIALS = "Invalid email or password."
+if account_authentication_method == "username_email":
+    INVALID_CREDENTIALS = "Invalid username, email or password."
 
 
 class UserResource(Resource):
@@ -83,16 +90,27 @@ class UserResource(Resource):
 class UserLoginResource(Resource):
     # post -> To log in a user
     def post(self):
-        user_schema_login = UserLoginSchema(only=("username","password"))
+        user_schema_login = UserLoginSchema()
+
         try:
             user_json = user_schema_login.load(request.get_json())
         except ValidationError as e:
             return e.messages
 
-        if not UserService.validate_credentials(user_json["username"], user_json["password"]):
+        if not UserService.validate_credentials(user_json):
             return {"message": INVALID_CREDENTIALS}, 401
 
-        user = UserService.get_by_username(user_json["username"])
+        if account_authentication_method == "username":
+            user = UserService.get_by_username(user_json["username"])
+
+        if account_authentication_method == "email":
+            user = UserService.get_by_email(user_json["email"])
+
+        if account_authentication_method == "username_email":
+            if "username" in user_json:
+                user = UserService.get_by_username(user_json["username"])
+            if "email" in user_json:
+                user = UserService.get_by_email(user_json["email"])
 
         if account_email_verification == "mandatory":
             if not user.most_recent_confirmation.confirmed:

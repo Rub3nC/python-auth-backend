@@ -18,7 +18,6 @@ class Config:
         "strength": 0       # password strength. Value range [0 : 1]
     }
     AUTH_TOKEN_EXPIRATION_SECONDS = 3600
-
     
     ACCOUNT_EMAIL_REQUIRED=True
     # -------------------------------------------------------------------------------------------------

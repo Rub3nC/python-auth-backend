@@ -149,7 +149,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"username\": \"user_example\",\n\t\"email\": \"user@example.com\",\n\t\"password\": \"!us3r.3xamp13!\",\n\t\"first_name\": \"User\",\n\t\"last_name\": \"Example\"\n}"
+							"raw": "{\n\t\"username\": \"wilfredvas\",\n\t\"email\": \"wilfredvas@gmail.com\",\n\t\"password\": \"QWER.1234\",\n\t\"first_name\": \"User\",\n\t\"last_name\": \"Example\"\n}"
 						},
 						"url": {
 							"raw": "http://127.0.0.1:5000/v1/auth/user",
@@ -196,9 +196,41 @@
 				},
 				{
 					"name": "/v1/auth/login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "493d5c2e-9166-4fcb-a643-96424cb2d68d",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"jwt_token not empty\", function () {",
+									"    pm.expect(jsonData.token).not.eql(undefined);",
+									"});",
+									"",
+									"// set access token as environement variable",
+									"if (jsonData.token !== undefined) {",
+									"    postman.setEnvironmentVariable(\"jwt_token\", jsonData.token);",
+									"} else {",
+									"    postman.setEnvironmentVariable(\"access_token\", null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"wilfredvas\",\n\t\"password\": \"QWER.1234\"\n}"
+						},
 						"url": {
 							"raw": "http://127.0.0.1:5000/v1/auth/login",
 							"protocol": "http",
@@ -222,7 +254,24 @@
 					"name": "/v1/auth/logout",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "http://127.0.0.1:5000/v1/auth/logout",
 							"protocol": "http",
@@ -246,7 +295,17 @@
 					"name": "/v1/auth/confirm-email",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"wilfredvas\"\n}"
+						},
 						"url": {
 							"raw": "http://127.0.0.1:5000/v1/auth/confirm-email",
 							"protocol": "http",
