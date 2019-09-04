@@ -6,6 +6,7 @@ from main.bcrypt import app_bcrypt
 import os
 import bcrypt
 import jwt
+import pytz
 from typing import Dict
 from time import time
 from datetime import datetime, timedelta
@@ -155,16 +156,19 @@ class AuthTokenService:
     def encode_auth_token(cls, user_id:str):
         """Create a token with user_id and expiration date using secret key"""
         exp_seconds = config.AUTH_TOKEN_EXPIRATION_SECONDS
-        exp_date = datetime.now() + timedelta(seconds=exp_seconds)
-        payload = {"exp": exp_date, "iat": datetime.now(), "sub": user_id}
+        time = datetime.utcnow().replace(tzinfo=pytz.utc)
+        exp_date = time + timedelta(seconds=exp_seconds)
+        payload = {"exp": exp_date, "iat": time, "sub": user_id}
         return jwt.encode(payload, config.SECRET_KEY, algorithm="HS256").decode("utf-8")
 
     @classmethod
     def decode_auth_token(cls, token:str):
         """Convert token to original payload using secret key if the token is valid"""
         try:
-            payload = jwt.decode(token, config.SECRET_KEY, algorithm="HS256", options={'verify_exp': False})
+            payload = jwt.decode(token, config.SECRET_KEY, algorithm="HS256")
             return payload
+        except jwt.ExpiredSignatureError as ex:
+            raise TokenExpiredError() from ex
         except jwt.InvalidTokenError as ex:
             raise InvalidTokenError() from ex
 
