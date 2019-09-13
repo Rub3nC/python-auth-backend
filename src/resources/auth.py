@@ -3,7 +3,7 @@ import traceback
 from marshmallow import ValidationError
 from flask_restful import Resource
 from flask import request, jsonify
-from schemas import UserSchema, UserRegistrationSchema, UserLoginSchema
+from schemas import UserSchema, UserRegistrationSchema, UserLoginSchema, UserUpdateSchema
 from services import UserService, EmailConfirmationService, AuthTokenService, auth_required
 
 from libs import SendMailException
@@ -89,11 +89,25 @@ class UserResource(Resource):
 
     # put -> To update user information. Not valid to password. Access_token require
     def put(self):
-        # Received and check data
-        # If data not valid prepare error message and send
-        # If data valid update user information
-        # Response
-        return {"message": "Update User"}, 200
+        user_schema_update = UserUpdateSchema()
+        user_json = request.get_json()
+        try:
+            user = user_schema_update.load(user_json)
+        except ValidationError as e:
+            return e.messages
+
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+        
+        if not UserService.get_by_id(payload["sub"]):
+            return {"message": USER_NOT_FOUND}, 404
+        
+        user = UserService.update(
+            payload["sub"], user["first_name"], user["last_name"], user["is_active"]
+        )
+
+        user_schema = UserSchema()
+        return user_schema.dump(user), 201
 
 class UserLoginResource(Resource):
     # post -> To log in a user

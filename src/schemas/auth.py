@@ -68,4 +68,9 @@ class UserLoginSchema(ma.Schema):
             if not "email" in data and not "username" in data:
                 raise ValidationError({"username or email": ["Missing data for required field."]})
             
-        return data    
+        return data
+
+class UserUpdateSchema(ma.Schema):
+    first_name = fields.String(required=True)
+    last_name = fields.String(required=True)
+    is_active = fields.Boolean(required=True)
