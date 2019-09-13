@@ -94,6 +94,14 @@ class UserService:
         return user
 
     @classmethod
+    def update_password(cls, user_id:str, password:str) -> bool:
+        user = cls.get_by_id(user_id)
+        user.password = password
+        user.save()
+
+        return True
+
+    @classmethod
     def send_confirmation_email(cls, user_id) -> Response:
         user = cls.get_by_id(user_id)
         subject = "Registration Confirmation"

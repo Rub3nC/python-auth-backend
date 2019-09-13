@@ -88,6 +88,7 @@ class UserResource(Resource):
         return user_schema.dump(user), 201
 
     # put -> To update user information. Not valid to password. Access_token require
+    @auth_required
     def put(self):
         user_schema_update = UserUpdateSchema()
         user_json = request.get_json()
@@ -202,11 +203,26 @@ class ConfirmEmailResource(Resource):
 
 class ChangePasswordResource(Resource):
     # post -> To change user password. Register user require
+    @auth_required
     def post(self):
-        # Receive and check data {email or username}
-        # If not valid or not found prepare error message
-        # If valid send email to reset password
-        return {"message": "Password Change"}, 200
+        user_schema_password = UserRegistrationSchema(only=("password",))
+        user_json = request.get_json()
+        try:
+            user_password = user_schema_password.load(user_json)
+        except ValidationError as e:
+            return e.messages
+
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+
+        if not UserService.get_by_id(payload["sub"]):
+            return {"message": USER_NOT_FOUND}, 404
+
+        if UserService.update_password(payload["sub"], user_password["password"]):
+            return jsonify({"success": True})
+
+        return jsonify({"success": False})
+
 
 class ResetPasswordResource(Resource):
     # get -> To receive a request from the password change email. 
