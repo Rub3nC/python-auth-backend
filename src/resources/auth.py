@@ -75,9 +75,17 @@ class UserResource(Resource):
             return {"message": FAILED_TO_CREATE}, 500
 
     # get -> Return user profile. Access_token require
+    @auth_required
     def get(self):
-        # Response data profile
-        return {"message": "Data User Profile"}, 200
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+        user = UserService.get_by_id(payload["sub"])
+        
+        if not user:
+            return {"message": USER_NOT_FOUND}, 404
+        
+        user_schema = UserSchema()
+        return user_schema.dump(user), 201
 
     # put -> To update user information. Not valid to password. Access_token require
     def put(self):
