@@ -74,3 +74,4 @@ class UserUpdateSchema(ma.Schema):
     first_name = fields.String(required=True)
     last_name = fields.String(required=True)
     is_active = fields.Boolean(required=True)
+    is_admin = fields.Boolean(required=True)

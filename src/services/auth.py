@@ -1,3 +1,4 @@
+from typing import List
 from requests import Response
 from flask import request, url_for
 from functools import wraps
@@ -42,7 +43,7 @@ class UserService:
         return UserModel.query.filter_by(email=email).first()
 
     @staticmethod
-    def get_all() -> "UserModel":
+    def get_all() -> List["UserModel"]:
         """ Query all users """
         return UserModel.query.all()
 
@@ -70,10 +71,11 @@ class UserService:
         return True
  
     @classmethod
-    def update(cls, user_id: int, first_name:str, last_name:str, is_active: bool) -> "UserModel":
+    def update(cls, user_id: int, first_name:str, last_name:str, is_active: bool, is_admin: bool = False) -> "UserModel":
         """ Update a user's is_active """
         user = cls.get_by_id(user_id)
         user.is_active = is_active
+        user.is_admin = is_admin
         user.first_name = first_name
         user.last_name = last_name
         user.save()

@@ -34,4 +34,4 @@ api.add_resource(AuthorizeDeviceResource, '{}/authorize-device'.format(BLUEPRINT
 # Path of admin user
 # --------------------
 api.add_resource(UserListResource, '{}/users'.format(BLUEPRINT_PREFIX))
-api.add_resource(SpecificUserResource, '{}/user/<int:user_id>'.format(BLUEPRINT_PREFIX))
+api.add_resource(SpecificUserResource, '{}/user/<string:user_id>'.format(BLUEPRINT_PREFIX))

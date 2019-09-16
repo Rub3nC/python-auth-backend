@@ -27,6 +27,8 @@ CONFIRMATION_RESEND_SUCCESSFUL = "E-mail confirmation successfully re-sent."
 CONFIRMATION_NOT_CONFIRMED_ERROR = (
     "You have not confirmed registration, please check your email <{}>."
 )
+UNAUTHORIZED_ACCESS = "Unauthorized access."
+ADMIN_USER_NOT_FOUND = "Admin user not found."
 
 if account_authentication_method == "username":
     INVALID_CREDENTIALS = "Invalid username or password."
@@ -85,12 +87,12 @@ class UserResource(Resource):
             return {"message": USER_NOT_FOUND}, 404
         
         user_schema = UserSchema()
-        return user_schema.dump(user), 201
+        return user_schema.dump(user), 200
 
     # put -> To update user information. Not valid to password. Access_token require
     @auth_required
     def put(self):
-        user_schema_update = UserUpdateSchema()
+        user_schema_update = UserUpdateSchema(only=("first_name", "last_name", "is_active"))
         user_json = request.get_json()
         try:
             user = user_schema_update.load(user_json)
@@ -108,7 +110,7 @@ class UserResource(Resource):
         )
 
         user_schema = UserSchema()
-        return user_schema.dump(user), 201
+        return user_schema.dump(user), 200
 
 class UserLoginResource(Resource):
     # post -> To log in a user
@@ -268,30 +270,98 @@ class AuthorizeDeviceResource(Resource):
 
 class UserListResource(Resource):
     # get -> Return a user list. Admin user require
+    @auth_required
     def get(self):
-        # Verify user.
-        # If not admin user prepare error message
-        # If admin user send user list
-        return {"message": "User list"}, 200
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+        
+        user = UserService.get_by_id(payload["sub"])
+        if not user:
+            return {"message": ADMIN_USER_NOT_FOUND}, 404
+
+        if not user.is_admin:
+            return {"message": UNAUTHORIZED_ACCESS}, 404
+        
+        user_schema = UserSchema(many=True)
+        return {"users": user_schema.dump(UserService.get_all())}, 200
 
 class SpecificUserResource(Resource):
     # get -> Return user profile. Admin user require
-    def get(self, user_id: int):
-    	# Verify user.
-        # If not admin user or user_id not found prepare error message
-        # If admin user and user_id found send user information
-        return {"message": "Data a Specific User Profile"}, 200
+    @auth_required
+    def get(self, user_id:str):
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+        
+        user = UserService.get_by_id(payload["sub"])
+        if not user:
+            return {"message": ADMIN_USER_NOT_FOUND}, 404
+
+        if not user.is_admin:
+            return {"message": UNAUTHORIZED_ACCESS}, 404
+
+        user = UserService.get_by_id(user_id)
+        if not user:
+            return {"message": USER_NOT_FOUND}, 404
+
+        user_schema = UserSchema()
+        return user_schema.dump(user), 200
+
 
     # put -> To update user information. Admin user require
-    def put(self, user_id: int):
-        # Verify user.
-        # If not admin user or user_id not found prepare error message
-        # If admin user and user_id found send update user information
-        return {"message": "Update a Specific User"}, 200
+    @auth_required
+    def put(self, user_id:str):
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+        
+        user_admin = UserService.get_by_id(payload["sub"])
+        if not user_admin:
+            return {"message": ADMIN_USER_NOT_FOUND}, 404
+
+        if not user_admin.is_admin:
+            return {"message": UNAUTHORIZED_ACCESS}, 404
+
+        user = UserService.get_by_id(user_id)
+        if not user:
+            return {"message": USER_NOT_FOUND}, 404
+        
+        user_schema_update = UserUpdateSchema()
+        user_json = request.get_json()
+
+        try:
+            user_update = user_schema_update.load(user_json)
+        except ValidationError as e:
+            return e.messages
+
+        user = UserService.update(
+            user.id,
+            user_json["first_name"],
+            user_json["last_name"],
+            user_json["is_active"],
+            user_json["is_admin"]
+        )
+
+        user_schema = UserSchema()
+        return user_schema.dump(user), 200
 
     # delete -> To delete a user
-    def delete(self, user_id: int):
-        # Verify user.
-        # If not admin user or user_id not found prepare error message
-        # If admin user and user_id found delete user
-        return {"message": "Delete a user"}, 200
+    @auth_required
+    def delete(self, user_id:str):
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+        
+        user_admin = UserService.get_by_id(payload["sub"])
+        if not user_admin:
+            return {"message": ADMIN_USER_NOT_FOUND}, 404
+
+        if not user_admin.is_admin:
+            return {"message": UNAUTHORIZED_ACCESS}, 404
+
+        user = UserService.get_by_id(user_id)
+        if not user:
+            return {"message": USER_NOT_FOUND}, 404
+        
+        try:
+            user.delete()
+            return {"success": True}, 200
+        except:
+            return {"success": False}, 400
