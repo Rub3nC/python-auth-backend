@@ -5,6 +5,7 @@ from flask_script import Manager
 from flask_marshmallow import Marshmallow
 
 from main import create_app
+from main.commands import CreateAdminUser
 
 
 app = create_app(os.getenv('APP_ENV') or 'dev')
@@ -12,6 +13,7 @@ app.app_context().push()
 
 manager = Manager(app)
 manager.add_command("db", MigrateCommand)
+manager.add_command("createadminuser", CreateAdminUser)
 
 @manager.command
 def run():

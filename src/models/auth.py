@@ -24,6 +24,7 @@ class UserModel(db.Model, BaseModel):
     first_name = db.Column(db.String(80), nullable=True)
     last_name = db.Column(db.String(80), nullable=True)
     is_active = db.Column(db.Boolean, nullable=False)
+    is_admin = db.Column(db.Boolean, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False)
     update_at = db.Column(db.DateTime, nullable=True)
 
@@ -36,6 +37,7 @@ class UserModel(db.Model, BaseModel):
         self.created_at = datetime.now()
         self.update_at = datetime.now()
         self.is_active = True
+        self.is_admin = False
 
     @property
     def password(self):
