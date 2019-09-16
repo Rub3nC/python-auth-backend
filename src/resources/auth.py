@@ -141,7 +141,7 @@ class UserLoginResource(Resource):
 
         token = AuthTokenService.encode_auth_token(user.id)
 
-        return {"token": token}, 200
+        return {"access_token": token}, 200
 
 class UserLogoutResource(Resource):
     # post -> To log out a user. Access_token require
@@ -238,15 +238,19 @@ class ResetPasswordResource(Resource):
         # Receive data {password}
         # If not valid prepare error message
         # If valid update user password
-        return {"message": "Udate Password"}, 200
+        return {"message": "Update Password"}, 200
 
 class VerifyTokenResource(Resource):
-    # post -> To verify JWT token. Access_token require
+    
+    @auth_required
     def post(self):
-        # Check access_token and the identity user
-        # If not valid or not found prepare error message
-        # If valid send current access_token
-        return {"message": "Verify Token"}, 200
+        token = AuthTokenService.get_token_from_header()
+        payload = AuthTokenService.decode_auth_token(token)
+
+        if not UserService.get_by_id(payload["sub"]):
+            return {"message": USER_NOT_FOUND}, 404
+
+        return {"access_token": token}, 200
 
 class TokenRefreshResource(Resource):
     # post -> To send a new access_token. refresh_token require
