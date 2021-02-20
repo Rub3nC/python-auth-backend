@@ -45,6 +45,11 @@ class UserModel(db.Model, BaseModel):
     def password(self, password):
         self.password_hash = app_bcrypt.generate_password_hash(password).decode('utf-8')
 
+    @property
+    def most_recent_confirmation(self) -> "EmailConfirmationModel":
+        # ordered by expiration time (in descending order)
+        return self.confirmation.order_by(db.desc(EmailConfirmationModel.expire_at)).first()
+
     def check_password(self, password):
         return app_bcrypt.check_password_hash(self.password_hash, password)
 

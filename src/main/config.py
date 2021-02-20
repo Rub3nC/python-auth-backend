@@ -1,12 +1,14 @@
 import os
-
+from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
-
+dotenv_path = os.path.join('{}/src/'.format(basedir), '.env')
+load_dotenv(dotenv_path)
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'mysecret')
     DEBUG = False
+    PROPAGATE_EXCEPTIONS = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     AUTH_PASSWORD_VALIDATORS_PARAMETERS = {
         "length": 8,        # Min length: 8            
@@ -32,6 +34,16 @@ class Config:
     ACCOUNT_EMAIL_VERIFICATION = 'optional'
     # -------------------------------------------------------------------------------------------------
     ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+
+    # The options are mailgun, sendgrid or print in console.
+    # If you select mailgun you must provide the information of MAILGUN_API_KEY and MAILGUN_DOMAIN
+    # If you select sendgrid you must provide the information of SENDGRID_API_KEY
+    # Else print the email in the console
+    EMAIL_BACKEND = "console"
+
+    MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY", None)
+    MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", None)
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", None)
 
 class DevelopmentConfig(Config):
     DEBUG = True

@@ -1,14 +1,28 @@
+import os
 import traceback
 from marshmallow import ValidationError
 from flask_restful import Resource
 from flask import request
 from schemas import UserSchema, UserRegistrationSchema
-from services import UserService
+from services import UserService, EmailConfirmationService
 
+from libs import SendMailException
 
+from main.config import config_by_name
+config = config_by_name[os.getenv('APP_ENV') or 'dev']
+
+account_email_verification = config.ACCOUNT_EMAIL_VERIFICATION
+
+USER_NOT_FOUND = "User not found."
 USER_ALREADY_EXISTS = "A user with that username already exists."
 EMAIL_ALREADY_EXISTS = "A user with that email already exists."
 FAILED_TO_CREATE = "Internal server error. Failed to create user."
+CONFIRMATION_NOT_FOUND = "Confirmation reference not found."
+CONFIRMATION_LINK_EXPIRED = "The link has expired."
+CONFIRMATION_ALREADY_CONFIRMED = "Registration has already been confirmed."
+CONFIRMATION_SUCCESS = "Email Confirmation Success."
+CONFIRMATION_RESEND_FAIL = "Internal server error. Failed to resend confirmation email."
+CONFIRMATION_RESEND_SUCCESSFUL = "E-mail confirmation successfully re-sent."
 
 
 class UserResource(Resource):
@@ -35,8 +49,14 @@ class UserResource(Resource):
                 user["first_name"],
                 user["last_name"],
             )
+            if not account_email_verification == "none":
+                confirmation = EmailConfirmationService.create(user.id)
+                UserService.send_confirmation_email(user.id)
             user_schema = UserSchema()
             return user_schema.dump(user), 201
+        except SendMailException as e:
+            user.delete()  # rollback
+            return {"message": str(e)}, 500
         except:  # failed to save user to db
             traceback.print_exc()
             if user:
@@ -77,20 +97,53 @@ class UserLogoutResource(Resource):
         return {"message": "Logout in user"}, 200
 
 class ConfirmEmailResource(Resource):
-    # get -> To receive a request from the confirm email. 
-    # Register user require
+    # get -> To receive email confirmations
     def get(self):
-        # Check request token from confirm email
-        # If not valid prepare error message
-        # If valid update True confirm-email flag
-        return {"message": "Confirm Email Update"}, 200
+        confirmation_id = request.args.get("confirmation_id", "")
+        confirmation = EmailConfirmationService.get_by_id(confirmation_id)
+        if not confirmation:
+            return {"message": CONFIRMATION_NOT_FOUND}, 404
+
+        if EmailConfirmationService.expired(confirmation_id):
+            return {"message": CONFIRMATION_LINK_EXPIRED}, 400
+
+        if confirmation.confirmed:
+            return {"message": CONFIRMATION_ALREADY_CONFIRMED}, 400
+
+        confirmation.confirmed = True
+        confirmation.save()
+
+        return {"message": CONFIRMATION_SUCCESS}, 200
 
     # post -> To send a resend email. Register user require
     def post(self):
-        # Receive and check user data
-        # If not valid or user no found prepare error message
-        # Send confirm email
-        # Response
+        user_schema = UserRegistrationSchema(only=("username",))
+        try:
+            username_json = user_schema.load(request.get_json())
+        except ValidationError as e:
+            return e.messages
+        
+        user = UserService.get_by_username(username_json["username"])
+        if not user:
+            return {"message": USER_NOT_FOUND}, 404
+
+        try:
+            # find the most current confirmation for the user
+            confirmation = user.most_recent_confirmation  # using property decorator
+            if confirmation:
+                if confirmation.confirmed:
+                    return {"message": CONFIRMATION_ALREADY_CONFIRMED}, 400
+                EmailConfirmationService.force_to_expire(confirmation.id)
+
+            new_confirmation = EmailConfirmationService.create(user.id)  # create a new confirmation
+            UserService.send_confirmation_email(user.id)  # re-send the confirmation email
+            return {"message": CONFIRMATION_RESEND_SUCCESSFUL}, 201
+        except SendMailException as e:
+            new_confirmation.delete()
+            return {"message": str(e)}, 500
+        except:
+            traceback.print_exc()
+            return {"message": CONFIRMATION_RESEND_FAIL}, 500
         return {"message": "Send confirm email"}, 200
 
 class ChangePasswordResource(Resource):

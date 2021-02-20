@@ -11,3 +11,5 @@ marshmallow==3.0.0b16
 flask-marshmallow==0.10.1
 marshmallow-sqlalchemy==0.17.0
 password-strength==0.0.3.post2
+python-dotenv==0.10.3
+requests==2.22.0
